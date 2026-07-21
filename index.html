@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Video Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --black:#080810;
+    --surface:#0e0e1a;
+    --card:#141428;
+    --border:rgba(255,255,255,0.07);
+    --border2:rgba(255,255,255,0.13);
+    --txt:#e8e8f0;
+    --txt2:#8888aa;
+    --txt3:#44445a;
+    --accent:#7c5cfc;
+    --accent2:#a07cf8;
+    --accentbg:rgba(124,92,252,0.10);
+    --accentbdr:rgba(124,92,252,0.35);
+    --green:#22c87a;
+    --greenbg:rgba(34,200,122,0.10);
+    --greenbdr:rgba(34,200,122,0.30);
+    --red:#f05858;
+    --redbg:rgba(240,88,88,0.10);
+    --yellow:#f0b429;
+    --r:10px;
+    --r2:16px;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--black);
+    color:var(--txt);
+    font-family:'Inter',sans-serif;
+    font-size:15px;
+    line-height:1.6;
+    min-height:100vh;
+  }
+
+  /* ── Header ── */
+  header{
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    padding:0 2rem;
+    height:60px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:100;
+  }
+  .logo{
+    display:flex;align-items:center;gap:10px;
+    font-family:'Syne',sans-serif;font-weight:800;font-size:18px;
+    color:var(--txt);text-decoration:none;letter-spacing:-0.3px;
+  }
+  .logo-dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 12px var(--accent);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.85)}}
+  .badge{
+    font-size:11px;padding:3px 10px;border-radius:999px;
+    background:var(--accentbg);border:1px solid var(--accentbdr);
+    color:var(--accent2);font-weight:600;letter-spacing:0.05em;
+  }
+
+  /* ── Page ── */
+  .page{max-width:700px;margin:0 auto;padding:2.5rem 1.5rem 5rem}
+
+  .hero{margin-bottom:2.5rem;text-align:center}
+  .hero-title{
+    font-family:'Syne',sans-serif;font-weight:800;
+    font-size:clamp(28px,5vw,42px);
+    letter-spacing:-1px;line-height:1.1;
+    background:linear-gradient(135deg,#fff 30%,var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    margin-bottom:10px;
+  }
+  .hero-sub{font-size:15px;color:var(--txt2);max-width:440px;margin:0 auto}
+
+  /* ── Cards ── */
+  .card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--r2);padding:1.5rem;margin-bottom:1.25rem;
+    transition:border-color 0.2s;
+  }
+  .card:focus-within{border-color:var(--border2)}
+  .card-title{
+    font-size:11px;font-weight:600;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--txt3);
+    margin-bottom:1.1rem;display:flex;align-items:center;gap:7px;
+  }
+  .card-title-icon{font-size:15px;opacity:0.8}
+
+  /* ── Fields ── */
+  .row{display:grid;gap:14px;margin-bottom:14px}
+  .row:last-child{margin-bottom:0}
+  .cols2{grid-template-columns:1fr 1fr}
+  .field{display:flex;flex-direction:column;gap:6px}
+  label{font-size:13px;font-weight:500;color:var(--txt2)}
+  .req{color:var(--accent2)}
+
+  input[type=text],input[type=email],input[type=url],select,textarea{
+    background:#0a0a16;border:1px solid var(--border);
+    border-radius:var(--r);padding:10px 14px;
+    font-size:14px;color:var(--txt);font-family:'Inter',sans-serif;
+    width:100%;outline:none;transition:border-color 0.15s;
+    -webkit-appearance:none;appearance:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--accentbdr)}
+  input::placeholder,textarea::placeholder{color:var(--txt3)}
+  select{cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2344445a' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;
+  }
+  textarea{resize:vertical;min-height:90px;line-height:1.55}
+  .hint{font-size:12px;color:var(--txt3)}
+
+  /* ── Style tiles ── */
+  .style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .style-tile{
+    padding:10px 8px;border-radius:var(--r);
+    border:1px solid var(--border);background:#0a0a16;
+    cursor:pointer;text-align:center;
+    font-size:12px;font-weight:500;color:var(--txt2);
+    transition:all 0.15s;user-select:none;
+  }
+  .style-tile:hover{border-color:var(--border2);color:var(--txt)}
+  .style-tile.on{background:var(--accentbg);border-color:var(--accentbdr);color:var(--accent2)}
+  .style-tile .emoji{display:block;font-size:20px;margin-bottom:4px}
+
+  /* ── Duration tabs ── */
+  .dur-row{display:flex;gap:8px}
+  .dur-btn{
+    flex:1;padding:10px;border-radius:var(--r);
+    border:1px solid var(--border);background:#0a0a16;
+    cursor:pointer;text-align:center;font-size:13px;font-weight:600;
+    color:var(--txt2);font-family:'Inter',sans-serif;transition:all 0.15s;
+  }
+  .dur-btn:hover{border-color:var(--border2);color:var(--txt)}
+  .dur-btn.on{background:var(--accentbg);border-color:var(--accentbdr);color:var(--accent2)}
+  .dur-btn small{display:block;font-size:10px;font-weight:400;margin-top:2px;opacity:0.7}
+
+  /* ── Voice select ── */
+  .voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .voice-btn{
+    padding:10px 12px;border-radius:var(--r);
+    border:1px solid var(--border);background:#0a0a16;
+    cursor:pointer;font-size:12px;font-weight:500;color:var(--txt2);
+    text-align:left;transition:all 0.15s;
+  }
+  .voice-btn:hover{border-color:var(--border2);color:var(--txt)}
+  .voice-btn.on{background:var(--accentbg);border-color:var(--accentbdr);color:var(--accent2)}
+  .voice-btn .vname{display:block;font-size:13px;font-weight:600;margin-bottom:2px}
+  .voice-btn .vdesc{display:block;font-size:11px;opacity:0.6}
+
+  /* ── Webhook URL ── */
+  .url-row{display:flex;gap:8px}
+  .url-row input{flex:1;font-family:monospace;font-size:12px}
+  .url-row input::placeholder{color:var(--txt3);font-style:italic}
+
+  /* ── JSON Preview ── */
+  .json-wrap{display:none;margin-bottom:12px}
+  .json-box{
+    background:#060610;border:1px solid var(--border);border-radius:var(--r);
+    padding:1rem;font-family:monospace;font-size:12px;color:#8888cc;
+    line-height:1.7;white-space:pre-wrap;word-break:break-all;
+    max-height:280px;overflow-y:auto;
+  }
+
+  /* ── Buttons ── */
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;
+    padding:11px 20px;border-radius:var(--r);
+    border:1px solid var(--border);background:var(--card);
+    color:var(--txt2);font-size:14px;font-weight:500;
+    font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.15s;
+  }
+  .btn:hover{background:var(--surface);border-color:var(--border2);color:var(--txt)}
+  .btn:active{transform:scale(0.98)}
+  .btn-primary{
+    background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;
+    box-shadow:0 0 24px rgba(124,92,252,0.35);flex:1;justify-content:center;
+  }
+  .btn-primary:hover{background:#9170ff;border-color:#9170ff;color:#fff}
+  .btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+  .spinner{
+    width:16px;height:16px;border:2px solid rgba(255,255,255,0.25);
+    border-top-color:#fff;border-radius:50%;
+    animation:spin 0.7s linear infinite;display:none;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── Toast ── */
+  #toast{
+    position:fixed;bottom:24px;right:24px;
+    padding:12px 20px;border-radius:var(--r);
+    font-size:14px;font-weight:500;
+    opacity:0;pointer-events:none;
+    transition:opacity 0.25s,transform 0.25s;
+    transform:translateY(8px);z-index:999;
+    display:flex;align-items:center;gap:8px;max-width:360px;
+  }
+  #toast.show{opacity:1;transform:translateY(0)}
+  #toast.success{background:var(--greenbg);border:1px solid var(--greenbdr);color:var(--green)}
+  #toast.error{background:var(--redbg);border:1px solid rgba(240,88,88,0.3);color:var(--red)}
+  #toast.info{background:var(--accentbg);border:1px solid var(--accentbdr);color:var(--accent2)}
+  #toast.warn{background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.3);color:var(--yellow)}
+
+  /* ── Progress steps ── */
+  .steps{display:flex;gap:0;margin-bottom:2rem}
+  .step{
+    flex:1;text-align:center;padding:10px 4px;
+    font-size:11px;font-weight:600;color:var(--txt3);
+    border-bottom:2px solid var(--border);
+    transition:all 0.3s;letter-spacing:0.05em;text-transform:uppercase;
+  }
+  .step.active{color:var(--accent2);border-bottom-color:var(--accent)}
+  .step.done{color:var(--green);border-bottom-color:var(--green)}
+
+  @media(max-width:560px){
+    .cols2{grid-template-columns:1fr}
+    .style-grid{grid-template-columns:repeat(2,1fr)}
+    .voice-grid{grid-template-columns:1fr}
+    .btn-row{flex-direction:column}
+    .steps{display:none}
+    header{padding:0 1rem}
+    .page{padding:1.5rem 1rem 4rem}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <span class="logo-dot"></span>
+    AI Video Generator
+  </a>
+  <span class="badge">v16 · Generate + Email</span>
+</header>
+
+<main class="page">
+
+  <div class="hero">
+    <h1 class="hero-title">Create Your AI Video</h1>
+    <!-- <p class="hero-sub">Script → Voice → Video → Thumbnail → Google Drive → Email</p> -->
+  </div>
+
+  <div class="steps">
+    <div class="step active" id="step1">1 · Content</div>
+    <div class="step" id="step2">2 · Style</div>
+    <div class="step" id="step3">3 · Voice</div>
+    <div class="step" id="step4">4 · Deliver</div>
+  </div>
+
+  <!-- Webhook URL -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">🔗</span> n8n Webhook URL</div>
+    <div class="url-row">
+      <input id="webhook-url" type="url" placeholder="https://your-n8n.com/webhook/ai-video-trigger" />
+      <button class="btn" onclick="copyWebhook()" type="button">Copy</button>
+    </div>
+    <p class="hint" style="margin-top:6px">Paste your n8n webhook URL here</p>
+  </div>
+
+  <!-- Content -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">✍️</span> Content</div>
+    <div class="row">
+      <div class="field">
+        <label for="title">Video Title <span class="req">*</span></label>
+        <input id="title" type="text" placeholder="e.g. Discipline Beats Talent" autocomplete="off" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="description">Description <span class="req">*</span></label>
+        <textarea id="description" placeholder="Describe what the video should be about — the more detail the better the script..."></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="audience">Target Audience</label>
+        <input id="audience" type="text" placeholder="e.g. Young entrepreneurs aged 18–35" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual Style -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">🎨</span> Visual Style</div>
+    <div class="style-grid" id="style-grid">
+      <div class="style-tile on" data-style="hyper-realistic" onclick="setStyle(this)">
+        <span class="emoji">🎬</span>Hyper Realistic
+      </div>
+      <div class="style-tile" data-style="cinematic" onclick="setStyle(this)">
+        <span class="emoji">🎞️</span>Cinematic
+      </div>
+      <div class="style-tile" data-style="anime" onclick="setStyle(this)">
+        <span class="emoji">✨</span>Anime
+      </div>
+      <div class="style-tile" data-style="Disney Pixar" onclick="setStyle(this)">
+        <span class="emoji">🧸</span>Disney Pixar
+      </div>
+      <div class="style-tile" data-style="cyberpunk" onclick="setStyle(this)">
+        <span class="emoji">🌆</span>Cyberpunk
+      </div>
+      <div class="style-tile" data-style="fantasy" onclick="setStyle(this)">
+        <span class="emoji">🐉</span>Fantasy
+      </div>
+    </div>
+  </div>
+
+  <!-- Duration -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">⏱️</span> Video Duration</div>
+    <div class="dur-row">
+      <button class="dur-btn" data-dur="30" onclick="setDuration(this)" type="button">
+        30s <small>5 scenes</small>
+      </button>
+      <button class="dur-btn on" data-dur="60" onclick="setDuration(this)" type="button">
+        60s <small>8 scenes</small>
+      </button>
+      <button class="dur-btn" data-dur="90" onclick="setDuration(this)" type="button">
+        90s <small>12 scenes</small>
+      </button>
+    </div>
+  </div>
+
+  <!-- Voice -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">🎙️</span> Voice</div>
+    <div class="voice-grid" id="voice-grid">
+      <button class="voice-btn on" data-voice="en-US-GuyNeural" onclick="setVoice(this)" type="button">
+        <span class="vname">Guy</span>
+        <span class="vdesc">English · Male · Energetic</span>
+      </button>
+      <button class="voice-btn" data-voice="en-US-EmmaMultilingualNeural" onclick="setVoice(this)" type="button">
+        <span class="vname">Emma</span>
+        <span class="vdesc">English · Female · Clear</span>
+      </button>
+      <button class="voice-btn" data-voice="en-US-BrianNeural" onclick="setVoice(this)" type="button">
+        <span class="vname">Brian</span>
+        <span class="vdesc">English · Male · Deep</span>
+      </button>
+      <button class="voice-btn" data-voice="en-US-JennyNeural" onclick="setVoice(this)" type="button">
+        <span class="vname">Jenny</span>
+        <span class="vdesc">English · Female · Warm</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Delivery -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">📧</span> Delivery</div>
+    <div class="row">
+      <div class="field">
+        <label for="email">Your Email <span class="req">*</span></label>
+        <input id="email" type="email" placeholder="you@email.com" />
+        <p class="hint">Video link + Google Drive backup + thumbnail sent here when ready</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-icon">🚀</span> Generate Video</div>
+    <div class="json-wrap" id="json-wrap">
+      <pre class="json-box" id="json-box"></pre>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="send-btn" onclick="sendRequest()" type="button">
+        <div class="spinner" id="spinner"></div>
+        <span id="send-label">Generate Video →</span>
+      </button>
+      <button class="btn" onclick="togglePreview()" type="button" id="preview-btn">Preview JSON</button>
+      <button class="btn" onclick="copyPayload()" type="button">Copy JSON</button>
+    </div>
+    <div id="status-msg" style="margin-top:14px;font-size:13px"></div>
+  </div>
+
+</main>
+
+<div id="toast" role="alert"></div>
+
+<script>
+  var selectedStyle    = 'hyper-realistic';
+  var selectedDuration = '60';
+  var selectedVoice    = 'en-US-GuyNeural';
+  var previewOpen      = false;
+  var toastTimer;
+
+  function setStyle(el) {
+    document.querySelectorAll('.style-tile').forEach(function(t){t.classList.remove('on');});
+    el.classList.add('on');
+    selectedStyle = el.dataset.style;
+    updateStep(2);
+  }
+
+  function setDuration(el) {
+    document.querySelectorAll('.dur-btn').forEach(function(b){b.classList.remove('on');});
+    el.classList.add('on');
+    selectedDuration = el.dataset.dur;
+  }
+
+  function setVoice(el) {
+    document.querySelectorAll('.voice-btn').forEach(function(b){b.classList.remove('on');});
+    el.classList.add('on');
+    selectedVoice = el.dataset.voice;
+    updateStep(3);
+  }
+
+  function updateStep(n) {
+    for (var i=1;i<=4;i++) {
+      var s = document.getElementById('step'+i);
+      if (!s) continue;
+      if (i < n) s.className='step done';
+      else if (i===n) s.className='step active';
+      else s.className='step';
+    }
+  }
+
+  function buildPayload() {
+    return {
+      title:           document.getElementById('title').value.trim() || 'Discipline Beats Talent',
+      description:     document.getElementById('description').value.trim(),
+      style:           selectedStyle,
+      duration:        selectedDuration,
+      target_audience: document.getElementById('audience').value.trim() || 'Young professionals aged 18-35',
+      voice_id:        selectedVoice,
+      notify_email:    document.getElementById('email').value.trim()
+    };
+  }
+
+  function togglePreview() {
+    previewOpen = !previewOpen;
+    var wrap = document.getElementById('json-wrap');
+    var btn  = document.getElementById('preview-btn');
+    wrap.style.display = previewOpen ? 'block' : 'none';
+    btn.textContent    = previewOpen ? 'Hide JSON' : 'Preview JSON';
+    if (previewOpen) {
+      document.getElementById('json-box').textContent = JSON.stringify(buildPayload(), null, 2);
+    }
+  }
+
+  function copyPayload() {
+    var json = JSON.stringify(buildPayload(), null, 2);
+    navigator.clipboard.writeText(json).then(function(){
+      toast('JSON copied to clipboard', 'success');
+    }).catch(function(){
+      toast('Copy failed — use Preview JSON instead', 'error');
+    });
+  }
+
+  function copyWebhook() {
+    var v = document.getElementById('webhook-url').value;
+    if (v) {
+      navigator.clipboard.writeText(v).then(function(){
+        toast('Webhook URL copied', 'success');
+      });
+    }
+  }
+
+  async function sendRequest() {
+    var url   = document.getElementById('webhook-url').value.trim();
+    var title = document.getElementById('title').value.trim();
+    var desc  = document.getElementById('description').value.trim();
+    var email = document.getElementById('email').value.trim();
+    var status = document.getElementById('status-msg');
+
+    if (!url) {
+      toast('Paste your n8n webhook URL first', 'warn'); return;
+    }
+    if (!title) {
+      toast('Video title is required', 'warn'); return;
+    }
+    if (!desc) {
+      toast('Description is required', 'warn'); return;
+    }
+    if (!email) {
+      toast('Email is required to receive your video', 'warn'); return;
+    }
+
+    var btn     = document.getElementById('send-btn');
+    var spinner = document.getElementById('spinner');
+    var label   = document.getElementById('send-label');
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    label.textContent = 'Sending…';
+    status.style.color = 'var(--txt2)';
+    status.textContent = '⏳ Sending request to n8n…';
+    updateStep(4);
+
+    var payload = buildPayload();
+    if (previewOpen) {
+      document.getElementById('json-box').textContent = JSON.stringify(payload, null, 2);
+    }
+
+    try {
+      var res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        status.style.color = 'var(--green)';
+        status.innerHTML =
+          '<strong>✓ Request sent!</strong><br>' +
+          'Your video is being generated. This takes 5–10 minutes.<br>' +
+          'A complete email with your video, Drive link, and thumbnail will arrive at <strong>' + email + '</strong>';
+        toast('Video generation started!', 'success');
+      } else {
+        status.style.color = 'var(--red)';
+        status.textContent = '✗ n8n returned ' + res.status + ' — check your webhook URL and that the workflow is active';
+        toast('n8n error ' + res.status, 'error');
+      }
+    } catch(e) {
+      status.style.color = 'var(--yellow)';
+      status.innerHTML =
+        '⚠ Could not reach n8n (CORS blocked in browser).<br>' +
+        'Use <strong>Copy JSON</strong> and send via Postman or curl:<br>' +
+        '<code style="font-size:11px;color:var(--accent2)">curl -X POST ' + url + ' -H "Content-Type:application/json" -d \'PASTE_JSON\'</code>';
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      label.textContent = 'Generate Video →';
+    }
+  }
+
+  function toast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show ' + (type||'info');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 4000);
+  }
+
+  // Live JSON preview update
+  document.addEventListener('input', function() {
+    if (previewOpen) {
+      document.getElementById('json-box').textContent = JSON.stringify(buildPayload(), null, 2);
+    }
+  });
+</script>
+</body>
+</html>
